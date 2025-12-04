@@ -63,8 +63,6 @@ jobs:
 
       - name: Package Django application
         run: |
-          # 进入Django项目目录
-          cd django_project
           
           # 生成部署包（EB要求的格式）
           zip -r ../django-app-deploy.zip . -x "venv/*" ".git/*" ".env" ".elasticbeanstalk/*"
