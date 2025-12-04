@@ -71,12 +71,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # EB自动分配的域名
-ALLOWED_HOSTS = [
-    os.getenv('EB_ENVIRONMENT_URL', 'localhost'),
-    'localhost',
-    '127.0.0.1',
-    '0.0.0.0'
-]
+ALLOWED_HOSTS = ['*']
 
 # 静态文件配置（适配EB）
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')

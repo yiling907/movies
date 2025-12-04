@@ -268,7 +268,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "EB_ENVIRONMENT_URL"
-    value     = "django-devops-eb-env.eba-92s56huw.us-east-1.elasticbeanstalk.com"
+    value     = "https://django-devops-eb-env.eba-92s56huw.us-east-1.elasticbeanstalk.com"
   }
 
   # 环境变量（连接RDS）
@@ -311,7 +311,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DEBUG"
-    value     = "False"  # 生产环境关闭DEBUG
+    value     = "True"  # 生产环境关闭DEBUG
   }
 
   tags = {
