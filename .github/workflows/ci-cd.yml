@@ -65,7 +65,7 @@ jobs:
         run: |
           
           # 生成部署包（EB要求的格式）
-          zip -r ../django-app-deploy.zip . -x "venv/*" ".git/*" ".env" ".elasticbeanstalk/*"
+          zip -r django-app-deploy.zip . -x "venv/*" ".git/*" ".env" ".elasticbeanstalk/*"
 
       - name: Create EB application version
         run: |
