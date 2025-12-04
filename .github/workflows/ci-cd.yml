@@ -33,7 +33,6 @@ jobs:
 
       - name: Django checks
         run: |
-          cd django_project
           python manage.py check
 
   # 第二步：部署到EB（仅main分支push触发）

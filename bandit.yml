@@ -1,0 +1,11 @@
+exclude_dirs:
+  - venv
+  - .git
+tests:
+  - B101  
+  - B306  
+  - B307  
+  - B311  
+  - B501  
+skips:
+  - B104  
