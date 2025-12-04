@@ -99,6 +99,12 @@ resource "aws_security_group" "rds_sg" {
     protocol        = "tcp"
     security_groups = [aws_security_group.eb_sg.id]  # 仅允许EB访问
   }
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["80.233.62.248/32"]  # 本地公网IP，/32表示仅该IP
+  }
 
   egress {
     from_port   = 0
@@ -255,7 +261,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:container:python"
     name      = "WSGIPath"
-    value     = "movies/wsgi.py"
+    value     = "movies/wsgi:application"
   }
 
   # 环境变量（连接RDS）
