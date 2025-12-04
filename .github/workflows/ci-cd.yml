@@ -1,0 +1,132 @@
+name: CI/CD to AWS EB
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # 第一步：代码检查和测试
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r django_project/requirements.txt
+          pip install flake8 bandit safety awscli awsebcli
+
+      - name: Code quality check
+        run: |
+          flake8 django_project/
+          bandit -c bandit.yml -r django_project/
+          safety check -r django_project/requirements.txt
+
+      - name: Django checks
+        run: |
+          cd django_project
+          python manage.py check
+
+  # 第二步：部署到EB（仅main分支push触发）
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install AWS CLI and EB CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install awscli awsebcli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Package Django application
+        run: |
+          # 进入Django项目目录
+          cd django_project
+          
+          # 生成部署包（EB要求的格式）
+          zip -r ../django-app-deploy.zip . -x "venv/*" ".git/*" ".env" ".elasticbeanstalk/*"
+
+      - name: Create EB application version
+        run: |
+          # 获取EB配置
+          EB_APP_NAME=${{ secrets.EB_APPLICATION_NAME }}
+          EB_ENV_NAME=${{ secrets.EB_ENVIRONMENT_NAME }}
+          VERSION_LABEL="deploy-$(date +%Y%m%d%H%M%S)-${{ github.sha }}"
+          
+          # 上传部署包到S3
+          aws s3 cp django-app-deploy.zip s3://${{ secrets.EB_S3_BUCKET_NAME }}/$VERSION_LABEL.zip
+          
+          # 创建EB应用版本
+          aws elasticbeanstalk create-application-version \
+            --application-name $EB_APP_NAME \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=${{ secrets.EB_S3_BUCKET_NAME }},S3Key=$VERSION_LABEL.zip \
+            --auto-create-application
+
+          # 更新EB环境到新版本
+          aws elasticbeanstalk update-environment \
+            --environment-name $EB_ENV_NAME \
+            --version-label $VERSION_LABEL
+
+      - name: Wait for deployment to complete
+        run: |
+          EB_ENV_NAME=${{ secrets.EB_ENVIRONMENT_NAME }}
+          # 轮询检查部署状态，超时10分钟
+          for i in {1..60}; do
+            STATUS=$(aws elasticbeanstalk describe-environments --environment-names $EB_ENV_NAME --query "Environments[0].Status" --output text)
+            HEALTH=$(aws elasticbeanstalk describe-environments --environment-names $EB_ENV_NAME --query "Environments[0].Health" --output text)
+            
+            echo "Deployment status: $STATUS, Health: $HEALTH"
+            
+            if [ "$STATUS" = "Ready" ] && [ "$HEALTH" = "Green" ]; then
+              echo "Deployment successful!"
+              exit 0
+            fi
+            
+            if [ "$HEALTH" = "Red" ]; then
+              echo "Deployment failed! Health status is Red"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+          
+          echo "Deployment timed out after 10 minutes"
+          exit 1
+
+      - name: Post-deployment checks
+        run: |
+          # 检查EB环境URL是否可访问
+          EB_URL="http://${{ secrets.EB_ENVIRONMENT_URL }}"
+          curl --fail --max-time 30 $EB_URL || (echo "EB environment URL is not accessible" && exit 1)
+          
+          # 可选：执行数据库迁移验证
+          EB_ENV_NAME=${{ secrets.EB_ENVIRONMENT_NAME }}
+          aws elasticbeanstalk execute-command \
+            --environment-name $EB_ENV_NAME \
+            --command "cd /opt/python/current/app && python manage.py migrate --check" \
+            --instance-id $(aws elasticbeanstalk describe-environments --environment-names $EB_ENV_NAME --query "Environments[0].Instances[0].Id" --output text)
