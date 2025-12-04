@@ -1,16 +1,20 @@
 branch-defaults:
   main:
     environment: django-devops-eb-env
+environment-defaults:
+  django-devops-eb-env:
+    branch: null
+    repository: null
 global:
   application_name: django-devops-eb-app
   default_ec2_keyname: null
   default_platform: 64bit Amazon Linux 2023 v4.8.0 running Python 3.9
   default_region: us-east-1
   include_git_submodules: true
-  instance_profile: aws-elasticbeanstalk-ec2-instance-profile
+  instance_profile: null
   platform_name: null
   platform_version: null
-  profile: eb-cli
+  profile: null
   repository: null
   sc: git
   workspace_type: Application

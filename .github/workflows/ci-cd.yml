@@ -120,16 +120,3 @@ jobs:
           
           EB_URL="http://${{ secrets.EB_ENVIRONMENT_URL }}"
           curl --fail --max-time 30 $EB_URL || (echo "EB environment URL is not accessible" && exit 1)
-          
-          EB_ENV_NAME=${{ secrets.EB_ENVIRONMENT_NAME }}
-          INSTANCE_ID=$(aws elasticbeanstalk describe-environments \
-          --environment-names $EB_ENV_NAME \
-          --query "Environments[0].Instances[0].Id" \
-          --output text)
-
-          aws ssm send-command \
-            --instance-ids $INSTANCE_ID \
-            --document-name "AWS-RunShellScript" \
-            --parameters "commands=['cd /opt/python/current/app && source /var/app/venv/staging-LQM1lest/bin/activate && python manage.py migrate --check']" \
-            --comment "Check Django migrations" \
-            --output text
