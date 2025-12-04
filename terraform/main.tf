@@ -255,7 +255,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:container:python"
     name      = "WSGIPath"
-    value     = "django_project/wsgi.py"
+    value     = "movies/wsgi.py"
   }
 
   # 环境变量（连接RDS）
