@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from gunicorn.config import User
+from django.contrib.auth.admin import User
+
 
 
 class Command(BaseCommand):
