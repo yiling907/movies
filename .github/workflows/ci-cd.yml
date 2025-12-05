@@ -62,7 +62,7 @@ jobs:
       - name: Test Report
         run: |
           mkdir -p reports
-          pytest --junitxml=${{ env.TEST_REPORT_PATH }} --cov=movies --cov-report=xml:${{ env.COV_REPORT_PATH }} --cov-fail-under=70
+          pytest --junitxml=${{ env.TEST_REPORT_PATH }} --cov=. --cov-report=xml:${{ env.COV_REPORT_PATH }} --cov-fail-under=70
 
       - name: SonarQube Scan
         uses: SonarSource/sonarcloud-github-action@master
