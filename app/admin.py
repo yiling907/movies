@@ -17,8 +17,7 @@ class MovieAdmin(admin.ModelAdmin):
         "genre",
         "language",
         "country",
-        "is_public",
-        "release_date__year"  # Filter by release year
+        "is_public"
     ]
 
     # 4. Editable fields (update without opening detail view)
