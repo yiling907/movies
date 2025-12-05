@@ -1,3 +1,6 @@
 /terraform/.terraform/
 /env/
 /sqlite
+/reports/
+/.coverage
+/.venv/
