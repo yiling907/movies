@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 env:
   PYTHON_VERSION: "3.9"          
-  PROJECT_KEY: "movies"
+  PROJECT_KEY: "yiling907_movies"
   TEST_REPORT_PATH: "reports/test-results.xml"  
   COV_REPORT_PATH: "reports/coverage.xml"       
   
