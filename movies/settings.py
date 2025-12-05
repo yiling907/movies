@@ -79,6 +79,7 @@ ALLOWED_HOSTS = ['*']
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
+
 def load_eb_env():
     eb_env_file = '/opt/elasticbeanstalk/deployment/env'
     if os.path.exists(eb_env_file):
@@ -88,6 +89,7 @@ def load_eb_env():
                 if '=' in line and not line.startswith('#'):
                     key, value = line.split('=', 1)
                     os.environ[key] = value
+
 
 # 先加载 EB 环境变量（优先级高于本地 .env）
 load_eb_env()
@@ -104,7 +106,6 @@ DATABASES = {
         'CONN_MAX_AGE': 600,  # 连接池优化
     }
 }
-
 
 LANGUAGE_CODE = 'en-us'
 
