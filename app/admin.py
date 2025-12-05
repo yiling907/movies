@@ -7,6 +7,7 @@ from app.models import Movie
 @admin.register(Movie)
 class MovieAdmin(admin.ModelAdmin):
     """Customize Movie model display/operations in Django Admin"""
+
     # 1. List view: Key fields to display (simplified for clarity)
     list_display = ["title", "director", "genre", "release_date", "runtime", "rating", "is_public"]
 
@@ -14,12 +15,7 @@ class MovieAdmin(admin.ModelAdmin):
     search_fields = ["title", "director", "cast", "genre", "country"]
 
     # 3. Filter sidebar (quick filtering options)
-    list_filter = [
-        "genre",
-        "language",
-        "country",
-        "is_public"
-    ]
+    list_filter = ["genre", "language", "country", "is_public"]
 
     # 4. Editable fields (update without opening detail view)
     list_editable = ["is_public", "rating"]
@@ -29,17 +25,14 @@ class MovieAdmin(admin.ModelAdmin):
 
     # 6. Detail view: Group fields for better UX (collapsible sections)
     fieldsets = (
-        ("Core Movie Metadata", {
-            "fields": ("title", "director", "screenwriter", "cast", "genre", "release_date", "runtime")
-        }),
-        ("Content & Rating", {
-            "fields": ("plot_summary", "rating", "language", "country")
-        }),
-        ("Publishing Status", {
-            "fields": ("is_public",)
-        }),
-        ("System Information", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",)  # Hidden by default (reduces clutter)
-        }),
+        (
+            "Core Movie Metadata",
+            {"fields": ("title", "director", "screenwriter", "cast", "genre", "release_date", "runtime")},
+        ),
+        ("Content & Rating", {"fields": ("plot_summary", "rating", "language", "country")}),
+        ("Publishing Status", {"fields": ("is_public",)}),
+        (
+            "System Information",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},  # Hidden by default (reduces clutter)
+        ),
     )

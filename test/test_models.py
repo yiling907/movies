@@ -1,8 +1,8 @@
-
 import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from app.models import Movie
+
 
 @pytest.mark.django_db
 @pytest.fixture
@@ -19,9 +19,10 @@ def test_movie():
         rating=8.8,
         language="English",
         country="USA/UK",
-        is_public=True
+        is_public=True,
     )
     return movie
+
 
 @pytest.mark.django_db
 def test_movie_creation(test_movie):
@@ -44,10 +45,9 @@ def test_movie_rating_validation():
             release_date=timezone.now().date(),
             runtime=120,
             plot_summary="Test Summary",
-            rating=10.1
+            rating=10.1,
         )
         movie.full_clean()
-
 
     with pytest.raises(ValidationError):
         movie = Movie(
@@ -58,9 +58,10 @@ def test_movie_rating_validation():
             release_date=timezone.now().date(),
             runtime=120,
             plot_summary="Test Summary",
-            rating=-0.1
+            rating=-0.1,
         )
         movie.full_clean()
+
 
 @pytest.mark.django_db
 def test_movie_optional_fields():
@@ -73,7 +74,7 @@ def test_movie_optional_fields():
         runtime=169,
         plot_summary="A team of explorers travel through a wormhole in space.",
         screenwriter=None,
-        rating=8.6
+        rating=8.6,
     )
     assert movie.screenwriter is None
     assert Movie.objects.count() == 1

@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Movie(models.Model):
     """Core fields for Movie model (film metadata)"""
+
     # Core movie information
     title = models.CharField(max_length=255, verbose_name="Movie Title")
     director = models.CharField(max_length=200, verbose_name="Director")
@@ -23,7 +24,7 @@ class Movie(models.Model):
         blank=True,
         null=True,
         verbose_name="IMDB Rating (0-10)",
-        validators=[MinValueValidator(0), MaxValueValidator(10)]  # Enforce 0-10 range
+        validators=[MinValueValidator(0), MaxValueValidator(10)],  # Enforce 0-10 range
     )
     language = models.CharField(max_length=50, default="English", verbose_name="Original Language")
     country = models.CharField(max_length=100, verbose_name="Country of Origin")
