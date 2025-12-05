@@ -5,9 +5,13 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
-jobs:
+env:
+  PYTHON_VERSION: "3.9"          
+  PROJECT_KEY: "movies"
+  TEST_REPORT_PATH: "reports/test-results.xml"  
+  COV_REPORT_PATH: "reports/coverage.xml"       
   
+jobs:
   test:
     runs-on: ubuntu-latest
     steps:
@@ -18,7 +22,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -35,9 +38,49 @@ jobs:
         run: |
           python manage.py check
 
-  
-  deploy:
+  sonar-analysis:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Install Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"  
+
+      - name: Install Dependency
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django coverage pytest-cov
+      
+      - name: Test Report
+        run: |
+          mkdir -p reports
+          pytest --junitxml=${{ env.TEST_REPORT_PATH }} \
+                 --cov=movies \          
+                 --cov-report=xml:${{ env.COV_REPORT_PATH }} \
+                 --cov-fail-under=70     
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      
+      - name: SonarQube Gate
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: false
+        
+  deploy:
+    needs: sonar-analysis
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
