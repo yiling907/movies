@@ -1,6 +1,7 @@
 # movies/admin.py
 from django.contrib import admin
-from .models import Movie  # Only import Movie model
+
+from app.models import Movie
 
 
 @admin.register(Movie)
