@@ -1,8 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.admin import User
 
-
-
 class Command(BaseCommand):
     help = "Creates a superuser."
 
