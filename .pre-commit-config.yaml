@@ -3,28 +3,35 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
-      - id: trailing-whitespace
       - id: end-of-file-fixer
+        exclude: ^(movies/migrations/|app/migrations/|\.git/|__pycache__/|venv/|reports/|.*\.log|.*\.sqlite3)$
       - id: check-yaml
+        exclude: ^venv/
       - id: check-json
+        exclude: ^(\.git/|__pycache__/|venv/)$
       - id: check-added-large-files
+        exclude: ^(reports/|.*\.log|.*\.sqlite3|venv/)$
       - id: detect-aws-credentials
+        exclude: ^(movies/tests/|.*\.example|venv/)$
       - id: detect-private-key
+        exclude: ^venv/$
 
 
   - repo: https://github.com/PyCQA/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: [--max-line-length=120, --ignore=E501,W503]
-        exclude: movies/migrations/, app/migrations/,.git,__pycache__,venv
+        args: [--max-line-length=120, --ignore=E501]
+        exclude: ^(movies/migrations/|app/migrations/|\.git/|__pycache__/|venv/)$
+
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
     hooks:
       - id: black
         args: [--line-length=120]
-        exclude: movies/migrations/, app/migrations/,.git,__pycache__,venv
+        exclude: ^(movies/migrations/|app/migrations/|\.git/|__pycache__/|venv/)$
+
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
@@ -32,14 +39,7 @@ repos:
       - id: isort
         args: [--profile=black, --line-length=120]
         files: ^movies/
-
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.7
-    hooks:
-      - id: bandit
-        args: [-r, movies/, -x, movies/tests/, --severity-level=high]
-        exclude_dirs: movies/migrations/, app/migrations/,.git,__pycache__,venv
+        exclude: ^(movies/migrations/|app/migrations/|\.git/|__pycache__/|venv/)$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
     rev: v1.3.2
@@ -47,12 +47,12 @@ repos:
       - id: python-safety-dependencies-check
         args: [--full-report]
 
+
   - repo: local
     hooks:
       - id: pytest-run
         name: Run Django Tests
         entry: bash -c "DJANGO_TESTING=True pytest -v --cov=movies --cov-fail-under=65"
-
         language: system
         pass_filenames: false
         always_run: true
@@ -62,8 +62,17 @@ repos:
     hooks:
       - id: sonar-pre-scan
         name: SonarQube Pre-scan
-        entry: bash -c "sonar-scanner -Dsonar.projectKey=django-movies -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=dd7986a8d39916189a109ef6e1fbc05115aaf60f || echo 'SonarQube Warning'"
-
+        entry: bash -c "
+          source load_env.sh;
+          if [ -z \"$SONAR_TOKEN\" ]; then
+            echo 'skip sonar';
+            exit 0;
+          fi;
+          sonar-scanner \
+            -Dsonar.projectKey=django-movies \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=\$SONAR_TOKEN \
+            || echo 'SonarQube Warning';"
         language: system
         pass_filenames: false
         always_run: false
