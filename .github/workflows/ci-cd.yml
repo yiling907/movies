@@ -108,7 +108,7 @@ jobs:
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
         run: |
-          cd aws_service
+          cd terraform
           terraform init
           terraform fmt -check
 
@@ -117,7 +117,7 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request' || github.event_name == 'push'
         run: |
-          cd aws_service
+          cd terraform
           terraform plan -no-color -input=false -out=tfplan.binary
           echo "PLAN_OUTPUT<<EOF" >> $GITHUB_ENV
           terraform show -no-color tfplan.binary >> $GITHUB_ENV
@@ -159,11 +159,11 @@ jobs:
           terraform_version: lastest
       - name: Terraform Init
         run: |
-          cd aws_service
+          cd terraform
           terraform init
       - name: Terraform Apply
         run: |
-          cd aws_service
+          cd terraform
           terraform apply -auto-approve -input=false
   deploy:
     needs: sonar-analysis
