@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+
+permissions:
+  contents: write
+  pull-requests: write
 env:
   PYTHON_VERSION: "3.9"
   PROJECT_KEY: "yiling907_movies"
