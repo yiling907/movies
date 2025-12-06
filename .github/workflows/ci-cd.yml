@@ -75,7 +75,92 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: false
+  check-and-plan:
+    needs: test
+    name: 'check-and-plan'
+    runs-on: ubuntu-latest
 
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: lastest
+      # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+      - name: Terraform Init
+        run: |
+          cd aws_service
+          terraform init
+          terraform fmt -check
+
+      # Generates an execution plan for Terraform
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          cd aws_service
+          terraform plan -no-color -input=false -out=tfplan.binary
+          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_ENV
+          terraform show -no-color tfplan.binary >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Comment Plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### Terraform Plan Output\n\n\`\`\`\n${process.env.PLAN_OUTPUT}\n\`\`\`\n`;
+            
+            await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+
+  deploy-terraform:
+    name: deploy-terraform
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check-and-plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: lastest
+      - name: Terraform Init
+        run: |
+          cd aws_service
+          terraform init
+      - name: Terraform Apply
+        run: |
+          cd aws_service
+          terraform apply -auto-approve -input=false
   deploy:
     needs: sonar-analysis
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
