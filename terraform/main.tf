@@ -25,9 +25,9 @@ resource "aws_vpc" "django_vpc" {
 
 # 公有子网（2个可用区，EB要求至少2个子网）
 resource "aws_subnet" "django_subnet_1" {
-  vpc_id            = aws_vpc.django_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "${var.aws_region}a"
+  vpc_id                  = aws_vpc.django_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
   map_public_ip_on_launch = true
   tags = {
     Name = "django-devops-subnet-1a"
@@ -35,9 +35,9 @@ resource "aws_subnet" "django_subnet_1" {
 }
 
 resource "aws_subnet" "django_subnet_2" {
-  vpc_id            = aws_vpc.django_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "${var.aws_region}b"
+  vpc_id                  = aws_vpc.django_vpc.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.aws_region}b"
   map_public_ip_on_launch = true
   tags = {
     Name = "django-devops-subnet-2b"
@@ -77,9 +77,9 @@ resource "aws_route_table_association" "django_rta_2" {
 
 # RDS子网组（必须创建，用于绑定自定义VPC的子网）
 resource "aws_db_subnet_group" "django_rds_subnet_group" {
-  name       = "django-devops-rds-subnet-group"
+  name        = "django-devops-rds-subnet-group"
   description = "Subnet group for Django RDS instance"
-  subnet_ids = [aws_subnet.django_subnet_1.id, aws_subnet.django_subnet_2.id]
+  subnet_ids  = [aws_subnet.django_subnet_1.id, aws_subnet.django_subnet_2.id]
 
   tags = {
     Name = "django-devops-rds-subnet-group"
@@ -97,13 +97,13 @@ resource "aws_security_group" "rds_sg" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.eb_sg.id]  # 仅允许EB访问
+    security_groups = [aws_security_group.eb_sg.id] # 仅允许EB访问
   }
   ingress {
     from_port   = 5432
     to_port     = 5432
     protocol    = "tcp"
-    cidr_blocks = ["80.233.62.248/32"]  # 本地公网IP，/32表示仅该IP
+    cidr_blocks = ["80.233.62.248/32"] # 本地公网IP，/32表示仅该IP
   }
 
   egress {
@@ -120,21 +120,21 @@ resource "aws_security_group" "rds_sg" {
 
 # RDS PostgreSQL实例
 resource "aws_db_instance" "django_rds" {
-  identifier           = "django-devops-rds"
-  engine               = "postgres"
-  engine_version       = "17.6"
-  instance_class       = "db.t3.micro"
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  db_name              = var.rds_db_name
-  username             = var.rds_username
-  password             = var.rds_password
-  port                 = 5432
+  identifier             = "django-devops-rds"
+  engine                 = "postgres"
+  engine_version         = "17.6"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  storage_type           = "gp2"
+  db_name                = var.rds_db_name
+  username               = var.rds_username
+  password               = var.rds_password
+  port                   = 5432
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  publicly_accessible  = false  # 生产级配置：仅内网访问
-  skip_final_snapshot  = true
-  deletion_protection  = false
-  db_subnet_group_name = aws_db_subnet_group.django_rds_subnet_group.name
+  publicly_accessible    = false # 生产级配置：仅内网访问
+  skip_final_snapshot    = true
+  deletion_protection    = false
+  db_subnet_group_name   = aws_db_subnet_group.django_rds_subnet_group.name
 
   tags = {
     Name = "django-devops-rds"
@@ -207,9 +207,9 @@ resource "aws_elastic_beanstalk_application" "django_eb_app" {
 resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   name                = "django-devops-eb-env"
   application         = aws_elastic_beanstalk_application.django_eb_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.8.0 running Python 3.9"  # 适配Python版本
+  solution_stack_name = "64bit Amazon Linux 2023 v4.8.0 running Python 3.9" # 适配Python版本
 
-   depends_on = [
+  depends_on = [
     aws_iam_instance_profile.eb_instance_profile,
     aws_iam_role_policy_attachment.eb_instance_role_policy
   ]
@@ -217,7 +217,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "EnvironmentType"
-    value     = "SingleInstance"  # 测试用，生产用LoadBalanced
+    value     = "SingleInstance" # 测试用，生产用LoadBalanced
   }
 
   setting {
@@ -234,7 +234,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
-    name      = "IamInstanceProfile"  # 关键：Launch Config中也需指定
+    name      = "IamInstanceProfile" # 关键：Launch Config中也需指定
     value     = aws_iam_instance_profile.eb_instance_profile.name
   }
 
@@ -311,7 +311,7 @@ resource "aws_elastic_beanstalk_environment" "django_eb_env" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DEBUG"
-    value     = "True"  # 生产环境关闭DEBUG
+    value     = "True" # 生产环境关闭DEBUG
   }
 
   tags = {
